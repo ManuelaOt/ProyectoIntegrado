@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  heimdall:
+    image: linuxserver/heimdall:latest
+    container_name: heimdall
+    restart: unless-stopped
+    environment:
+      - PUID=1001
+      - GUID=1001
+      - TZ=Europe/Madrid
+    volumes:
+      - config_heimdall:/config
+    ports:
+      - 8091:80
+    networks:
+      network:
+        ipv4_address: 172.21.0.2
+
+networks:
+  network:
+    ipam:
+      config:
+        - subnet: "172.21.0.0/16"
+          gateway: 172.21.0.1
+
+volumes:
+  config_heimdall:
+    driver: local
+  

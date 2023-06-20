@@ -1,0 +1,79 @@
+version: '3'
+
+services:
+
+  synapsepostgres:
+    image: docker.io/matrixdotorg/synapse:latest
+    container_name: synapsepostgres
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/operador/MATRIX/synapse:/data
+    depends_on:
+      - db
+    ports:
+      - 8448:8448/tcp
+      - 8008:8008/tcp
+    networks:
+      matrix_network:
+        ipv4_address: 172.19.0.2
+
+  
+  db:
+    image: postgres
+    container_name: db
+    restart: always
+    environment:
+      TZ: Europe/Madrid
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: admin
+      POSTGRES_DB: synapse
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --lc-collate=C --lc-ctype=C'
+    ports:
+      - 5432:5432
+    networks:
+      matrix_network:
+        ipv4_address: 172.19.0.3
+    volumes:
+      - /home/operador/MATRIX/postgres:/var/lib/postgresql/data
+  
+
+  pgadmin4:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    environment:
+      - TZ=Europe/Madrid
+      - PGADMIN_DEFAULT_EMAIL=informatica@iesgrancapitan.org
+      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+    ports:
+      - 5050:80
+    networks:
+      matrix_network:
+        ipv4_address: 172.19.0.4
+
+
+  web:
+    image: nginx
+    container_name: web
+    restart: always
+    environment:
+      - TZ=Europe/Madrid
+    ports:
+      - 80:80
+    networks:
+      matrix_network:
+        ipv4_address: 172.19.0.5
+    volumes:
+      - /home/operador/MATRIX/element-v1.11.30:/usr/share/nginx/html:ro
+
+
+networks:
+  matrix_network:
+    external: true
+
+volumes:
+  db:
+    driver: local

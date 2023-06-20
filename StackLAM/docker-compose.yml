@@ -1,0 +1,64 @@
+version: '3'
+services:
+  ldap-account-manager:
+    build:
+      context: .
+    image: ghcr.io/ldapaccountmanager/lam:stable
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    container_name: lam
+    networks:
+      network:
+        ipv4_address: 172.20.0.2
+    volumes:
+      - config_lam:/var/lib/ldap-account-manager/config
+
+  ldap:
+    build:
+      context: .
+    image: osixia/openldap:latest
+    restart: unless-stopped
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "IESGranCapitan"
+      LDAP_DOMAIN: "iesgrancapitan.org"
+      LDAP_BASE_DN: "dc=iesgrancapitan,dc=org"
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_READONLY_USER: "false"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_VERIFY_CLIENT: "demand"
+    volumes:
+      - ldap:/var/lib/ldap
+      - slap:/etc/ldap/slapd.d
+      - cert:/container/service/slapd/assets/certs
+    ports:
+      - "389:389"
+      - "636:636"
+    networks:
+      network:
+        ipv4_address: 172.20.0.3
+      matrix_network:
+        ipv4_address: 172.19.0.6
+
+
+networks:
+  network:
+    ipam:
+      config:
+        - subnet: "172.20.0.0/16"
+          gateway: 172.20.0.1
+  matrix_network:
+    external: true
+
+volumes:
+  config_lam:
+    driver: local
+  ldap:
+    driver: local
+  slap:
+    driver: local
+  cert:
+    driver: local
